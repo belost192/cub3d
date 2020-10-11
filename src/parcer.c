@@ -11,173 +11,235 @@
 /* ************************************************************************** */
 
 #include "../Header/cub3d.h"
-#include "../minilibx_mms_20200219/mlx.h"
-#include "../libft/libft.h"
-#include <fcntl.h>
-#include <stdio.h>
-#define SCALE 16
 
-char	**make_map(t_list **head, int size)
+char	**ft_make_map(t_list **head, int count)
 {
-	char	**map = ft_calloc(size + 1, sizeof(char *));
-	int i;
-	t_list *tmp;
-	
-	i = -1;
-	tmp = *head;
-	while(tmp)
+	t_list	*tmp = *head;
+	char	**map = ft_calloc(count + 1, sizeof(char *));
+	int		i = 0;
+
+	while (tmp)
 	{
-		map[++i] = tmp->content;
+		map[i++] = ft_strdup(tmp->content);
 		tmp = tmp->next;
 	}
+	i = 0;
+	ft_lstclear(head, &free);
+	while (map[i])
+		ft_putendl_fd(map[i++], 1);
 	return (map);
 }
+	
 
-char **ft_open_map(char *av1)
+char	**ft_read_map(char *argv)
 {
-	char 		*line = 0;
-	t_list 		*head = 0;
-	int			amount = 0;
-	const int	fd = open(av1, O_RDONLY);
-
-	while (get_next_line(fd, &line) > 0)
+	char		*line;
+	t_list		*head;
+	int			count;
+	const int	fd = open(argv, O_RDONLY);
+	
+	line = 0;
+	head = 0;
+	count = 0;
+	while (get_next_line(fd, &line))
 	{
 		ft_lstadd_back(&head, ft_lstnew(line));
-		amount++;
+		count++;
 		line = NULL;
 	}
 	close(fd);
 	ft_lstadd_back(&head, ft_lstnew(line));
-	amount++;
-	return (make_map(&head, ft_lstsize(head)));
+	count++;
+	return (ft_make_map(&head, count));
+
 }
 
-void	draw_screen(t_all *all)
+void	ft_init_plr(t_all *all)
 {
-	t_point point;
-	t_plr plr;
-	t_win *win;
+	t_place	place;
 
-	t_win = all->win;
-
-	// all->player = &player;
-
-
-	ft_bzero(&point, sizeof(t_point));
-	win->img = mlx_new_image(win->mlx, 640, 480);
-	win->addr = mlx_get_data_addr(win->img, &win->bpp, &win->line_l, &win->en);
-	while(all->map[point.i])
+	ft_bzero(&place, sizeof(t_place));
+	while (all->map[(int)place.y])
 	{
-		point.j = 0;
-		while(all->map[point.i][point.j])
+		place.x = 0;
+		while (all->map[(int)place.y][(int)place.x])
 		{
-			if (all->map[point.i][point.j] == '1')
-				 ft_scale_img(all->win, point, 0xFF8C00);
-			// if (all->map[point.i][point.j] == 'N'|| all->map[point.i][point.j] == 'W' ||
-			// all->map[point.i][point.j] == 'S'|| all->map[point.i][point.j] == 'E')
-			// 	{
-					
-			// 		all->plr->i = point.i;
-			// 		all->plr->j = point.j;
-			// 		// player.i = point.i;
-			// 		// player.j = point.j;
-			// 		// all->player->color = 0xFFFFFF;
-			// 		// printf("%d %d", all->player->i, all->player->j);
-			// 		// ft_scale_img(all->win, point, all);
-			// 		ft_draw_player(all, plr);
-
-			// 	}	
-			point.j++;
+			if (ft_strchr("NEWS", all->map[(int)place.y][(int)place.x]))
+			{
+				all->plr->plrX = place.x * SCALE;
+				all->plr->plrY = place.y * SCALE;
+				all->plr->dir = 3 * M_PI_2;
+			}
+			place.x++;
 		}
-		point.i++;
-	}
-		ft_draw_player(all, all->plr);
-		mlx_put_image_to_window(win->mlx, win->win, win->img, 0, 0);
-		mlx_destroy_image(win->mlx, win->img);
+		place.y++;
+	}	
 }
 
-void	ft_draw_player(t_all *all, t_plr *pl)
+void	ft_draw_screen(t_all *all)
 {
-	t_plr plr;
-	plr = *all->plr;
+	t_place	place;
 
-	plr.start = plr.dir - M_PI_4;
-	plr.end = plr.dir + M_PI_4;
-	while (plr.start) < plr.end)
+	all->win->img = mlx_new_image(all->win->mlx, 1000, 512);
+	all->win->addr = mlx_get_data_addr(all->win->img, &all->win->bits_per_pixel,
+		&all->win->line_length, &all->win->en);
+	ft_bzero(&place, sizeof(t_place));
+	place.y = 0;
+	while (all->map[(int)place.y]) // от 
 	{
-		plr.j = plr->j;
-		plr.i = plr->i;
-		while (all->map[(int)(plr.j / SCALE)][(int)(plr.j / SCALE)] != '1')
+		place.x = 0;
+		while (all->map[(int)place.y][(int)place.x])
 		{
-			plr.x += cos(plr.dir);
-			plr.y += sin(plr.dir);
-			ft_pixel_put(all->win, plr.y, 0x990099);
+			if (all->map[(int)place.y][(int)place.x] == '1')
+				ft_scale_img(all, place);
+			place.x++;
 		}
-		plr.start += M_PI_2 / 40;
+		place.y++;
+	} // до 
+	ft_draw_plr(all, place);
+	mlx_put_image_to_window(all->win->mlx, all->win->win, all->win->img, 0, 0);
+	mlx_destroy_image(all->win->mlx, all->win->img);
+}
+
+void	draw_wall(t_all *all, t_place pos, float angel, int lenght2)
+{
+	const double hz = cosf(all->plr->plrStart - all->plr->dir); // угол между лучем и зрением игрока
+	double	len = (double)lenght2 * hz; // длина луча (от игрока до стены)
+	double column_height = 512 / lenght2;
+	double	posx = 0 + angel; // позиция по X для отрисовки стен
+	double	dStart = floor(len) + 64; // первый пиксель стены
+	double	dEnd = floor(-len)  + 400; // последний пиксель стены
+
+	if (dStart < 0)
+	 	dStart = 1;
+	if (dEnd > 512)
+	 	dEnd = 511;
+
+	while (dStart < dEnd)
+	{
+		ft_pixel_put(all, posx, dStart, 0xEBCB8B - len * 2);
+		dStart++;
+
 	}
-	
 }
 
-void	ft_pixel_put(t_win *win, int j, int int i, int color)
+void	ft_draw_plr(t_all *all, t_place pos)
 {
-		char *dst;
-
-		dst = win->addr + (x *(win->bpp / 8) + y * win->line_l);
-		*(int)dst = color;
+	ft_pixel_put(all, all->plr->plrX, all->plr->plrY, 0x0000FF00);
+	all->plr->plrStart = all->plr->dir - (M_PI_4);
+	all->plr->plarEnd = all->plr->dir + (M_PI_4);
+	float x = 0;
+	while (all->plr->plrStart <= all->plr->plarEnd)	
+	{
+		pos.x = all->plr->plrX;
+		pos.y = all->plr->plrY;
+		float c = 0;
+		double iy = 0;
+		double ix = 0;
+		double dist = 0;
+		int i = 0;
+		while (all->map[(int)(pos.y / SCALE)][(int)(pos.x / SCALE)] != '1')
+		{
+			c += 0.05;
+			pos.x = pos.x + cos(all->plr->plrStart);
+			pos.y = pos.y + sin(all->plr->plrStart);	
+			i++;
+			ft_pixel_put(all, pos.x, pos.y, 0xEBCB8B);
+		}
+		iy = pos.y - all->plr->plrY; // Длина катета
+		ix = pos.x - all->plr->plrX; // Длина катета
+		(dist) = floor(sqrt((iy * iy) + (ix * ix))); // Длина луча
+		x += 1;
+		// draw_wall(all, pos, x, i); 
+		all->plr->plrStart += M_PI_2 / 1000;
+	}
 }
 
-int	key_press(int key, t_all *all)
+
+
+void            ft_pixel_put(t_all *data, int x, int y, int color)
 {
-	mlx_clear_window(all->win->mlx, all->win->win);
-	if (key == 13)
-		all->plr->i -= 1;
-	if (key == 1)d
-		all->plr->i += 1;
-	if (key == 0)
-		all->plr->j -= 1;
-	if (key == 2)
-		all->plr->j += 1;
-	if (key == 53)
+    char    *dst;
+
+    dst = data->win->addr + (y * data->win->line_length + x * (data->win->bits_per_pixel / 8));
+    *(int*)dst = color;
+}
+
+
+
+int		ft_move(int keypress, t_all *all)
+{
+	t_place posit;
+	posit.x = all->plr->plrX;
+	posit.y = all->plr->plrY;
+	mlx_clear_window(all->win->mlx, all->win->win);	
+	if (keypress == 13)
+		{
+		all->plr->plrY += sin(all->plr->dir) * 4;
+		all->plr->plrX += cos(all->plr->dir) * 4;
+		}
+		
+	if (keypress == 1)
+		{
+		all->plr->plrY -= sin(all->plr->dir) * 4;
+		all->plr->plrX -= cos(all->plr->dir) * 4;
+		}
+	if (keypress == 0)
+		all->plr->plrX -= 1;
+	if (keypress == 2)
+		all->plr->plrX += 1;
+	if (keypress == 12)
+	{
+		all->plr->dir -= 0.1;
+	}
+	if (keypress == 14)
+		all->plr->dir += 0.1;
+	if (keypress == 53)
 		exit(0);
-	draw_screen(all);
-	return (0);	
+	ft_draw_screen(all);
+	return(0);
+	
 }
 
-void	ft_scale_img(t_win *win, t_point point, t_all *all)
+void	ft_scale_img(t_all *all, t_place place)
 {
-	t_point end;
-	
+	t_place	end;
 
-	end.j = (point.j + 1) * SCALE;
-	end.i = (point.i + 1) * SCALE;
-	point.j *= SCALE;
-	point.i *= SCALE;
-	while (point.i < end.i)
+	end.x = (place.x + 1) * SCALE;
+	end.y = (place.y + 1) * SCALE;
+	place.x *= SCALE;
+	place.y *= SCALE;
+	while (place.y < end.y)
 	{
-		while (point.j < end.j)
-					mlx_pixel_put(win->mlx, win->win, point.j++, point.i, all->player->color);	
-		point.j -= SCALE;
-		point.i++;
+		while (place.x < end.x)
+			ft_pixel_put(all, place.x++, place.y, 0x3B4252);
+		place.x -= SCALE;
+		place.y++;
 	}
 }
-
 
 
 int main(int ac, char **av)
 {
-	t_win	win;
-	t_all	all;
 	t_plr	plr;
-
+	t_key	key;
+	t_win 	win;
+	t_all	all;
 	if (ac == 2)
-		all.map = ft_open_map(av[1]);
-	win.mlx = mlx_init();
-	win.win = mlx_new_window(win.mlx, 640, 480, "cub2d");
-	win.img = mlx_new_image(win.mlx, 640, 480);
-	win.addr = mlx_get_data_addr(win.img, &win.bpp, &win.line_l, &win.en);
+		all.map = ft_read_map(av[1]);
+	else
+		ft_putendl_fd("Pritirmozi, pritormozi", 2);
+	ft_bzero(&key, sizeof(t_key));
+	all.key = &key;
+	ft_bzero(&plr, sizeof(t_plr));
 	all.plr = &plr;
+	ft_init_plr(&all);
+	win.mlx = mlx_init();
+	win.win = mlx_new_window(win.mlx, ScreenWidth, ScreenHeight, "CUB2D");
+	win.img = mlx_new_image(win.mlx, ScreenWidth, ScreenHeight);
+	win.addr = mlx_get_data_addr(win.img, &win.bits_per_pixel, &win.line_length, &win.en);
 	all.win = &win;
-	draw_screen(&all);
-	mlx_hook(win.win, 2, (1L << 0), &key_press, &all);
+	ft_draw_screen(&all);
+	mlx_hook(win.win, 2, 1L<<0, &ft_move, &all);
 	mlx_loop(win.mlx);
 }

@@ -1,0 +1,16 @@
+{
+	"folders": [
+		{
+			"path": ".."
+		},
+		{
+			"path": "../../../Yandex.Disk.localized/21/cub3d/alldeady"
+		}
+	],
+	"settings": {
+		"files.associations": {
+			"__locale": "c",
+			"bitset": "c"
+		}
+	}
+}

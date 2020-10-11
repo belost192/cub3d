@@ -60,5 +60,7 @@ void	ft_putnbr_fd(int n, int fd);
 void	ft_lstadd_back(t_list **lst, t_list *new);
 int		ft_lstsize(t_list *lst);
 t_list	*ft_lstnew(void *content);
+void	ft_lstclear(t_list **lst, void (*del)(void *));
+
 
 #endif

@@ -13,7 +13,7 @@
 #include "../minilibx_mms_20200219/mlx.h"
 #include "../libft/libft.h"
 
-int	ft_crate_pixel(void)
+int	main(void)
 {
 	void *mlx = NULL;
 	void *win = NULL;
@@ -22,14 +22,10 @@ int	ft_crate_pixel(void)
 
 	mlx = mlx_init();
 	win = mlx_new_window(mlx, 640, 480, "test");
-	while (y++ < 200)
+	while (x++ < 640)
 	{
-		x = 100;
-		while (x++ < 200)
-		{
+	
 			mlx_pixel_put(mlx, win, x, y, 0xFF7F50);
-		}
-
 	}
 	mlx_loop(mlx);
 }
